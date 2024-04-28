@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Properties>
+        <!--跟项目名称一致-->
+        <property name="FILE_NAME">base-mvc</property>
+        <!--tomcat logs-->
+        <Property name="LOG_HOME">${sys:catalina.home}/logs</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss}]-%-5level-%class{36}-%L-%M-%msg%xEx%n"/>
+        </Console>
+        <!--这个会打印出所有的信息，每次大小超过size，则这size大小的日志会自动存入按年份-月份建立的文件夹下面并进行压缩，作为存档.gz-->
+        <RollingFile name="RollingFile" fileName="${LOG_HOME}/${FILE_NAME}.log"
+                     filePattern="${LOG_HOME}/$${date:yyyy-MM-dd}/${FILE_NAME}-%d{yyyy-MM-dd-HH}-%i.log">
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss}]-%-5level-%class{36}-%L-%M-%msg%xEx%n"/>
+            <!-- 过滤器，值记录 ERROR -->
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="256 MB"/>
+            </Policies>
+            <!--i的最大值即打包个数,超过覆盖-->
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!--过滤掉spring和mybatis的一些无用的DEBUG信息-->
+        <logger name="org.springframework.data.redis" level="ERROR"></logger>
+        <logger name="org.springframework" level="ERROR"></logger>
+        <logger name="org.mybatis" level="ERROR"></logger>
+        <logger name="org.quartz" level="ERROR"></logger>
+        <!--sql日志-->
+        <logger name="net.sf.ehcache" level="ERROR"></logger>
+        <logger name="org.apache.shardingsphere" level="DEBUG"></logger>
+        <logger name="org.apache" level="ERROR"></logger>
+        <logger name="com.base" level="ERROR" additivity="true">
+            <appender-ref ref="RollingFile"/>
+        </logger>
+        <Root level="DEBUG">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>

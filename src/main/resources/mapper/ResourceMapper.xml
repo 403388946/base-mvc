@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.base.shiro.mapper.ResourceMapper" >
+  <resultMap id="BaseResultMap" type="com.base.shiro.model.Resource" >
+      <id column="id" property="id" jdbcType="BIGINT"/>
+      <result column="name" property="name" jdbcType="VARCHAR"/>
+      <result column="type" property="type" jdbcType="VARCHAR"/>
+      <result column="url" property="url" jdbcType="VARCHAR"/>
+      <result column="permission" property="permission" jdbcType="VARCHAR"/>
+      <result column="available" property="available" jdbcType="BIT"/>
+      <result column="parent_id" property="parentId" jdbcType="BIGINT"/>
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, name, type, url, permission, available, parent_id
+  </sql>
+
+
+
+  <insert id="insertBySelective" parameterType="com.base.shiro.model.Resource" flushCache="true">
+    insert into sys_permissions
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="name != null" >
+        name,
+      </if>
+      <if test="type != null" >
+        type,
+      </if>
+      <if test="url != null" >
+        url,
+      </if>
+      <if test="parentId != null" >
+        parent_id,
+      </if>
+      <if test="permission != null" >
+        permission,
+      </if>
+        available
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="name != null" >
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null" >
+        #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="url != null" >
+        #{url,jdbcType=VARCHAR},
+      </if>
+      <if test="parentId != null" >
+        #{parentId,jdbcType=BIGINT},
+      </if>
+      <if test="permission != null" >
+        #{permission,jdbcType=VARCHAR},
+      </if>
+        true
+    </trim>
+    <selectKey keyProperty="id" resultType="long" order="AFTER">
+      SELECT @@IDENTITY AS id
+    </selectKey>
+  </insert>
+  <update id="updateBySelective" parameterType="com.base.shiro.model.Resource" flushCache="true">
+    update sys_permissions
+    <set >
+      <if test="name != null" >
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null" >
+        type = #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="url != null" >
+        url = #{url,jdbcType=VARCHAR},
+      </if>
+      <if test="parentId != null" >
+        parent_id = #{parentId,jdbcType=BIGINT},
+      </if>
+      <if test="permission != null" >
+        permission = #{permission,jdbcType=VARCHAR},
+      </if>
+      <if test="available != null" >
+        available = #{available,jdbcType=BIT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+
+  <delete id="delete" flushCache="true">
+    DELETE FROM sys_permissions WHERE id = #{id}
+  </delete>
+
+  <select id="get" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM sys_permissions WHERE id = #{id}
+  </select>
+
+  <select id="findAll" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM sys_permissions WHERE available = TRUE
+  </select>
+
+  <select id="findByParentId" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM sys_permissions WHERE available = TRUE AND parent_id = #{parentId} ORDER BY SORT DESC
+  </select>
+
+  <insert id="saveRole4Permission" flushCache="true">
+    INSERT INTO sys_roles_permissions(permissions_id, role_id) VALUE (#{permissionId}, #{roleId})
+  </insert>
+
+  <select id="findPermissions" resultType="java.lang.Long">
+    SELECT DISTINCT permissions_id  FROM sys_roles_permissions rp
+    WHERE role_id = #{roleId}
+  </select>
+  <select id="queryPermissions" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM sys_permissions p
+    LEFT JOIN sys_roles_permissions rp ON p.id = rp.permissions_id
+    WHERE rp.role_id = #{roleId}
+  </select>
+
+  <delete id="deletePIdByRoleId">
+    DELETE FROM sys_roles_permissions WHERE role_id = #{roleId}
+  </delete>
+
+</mapper>

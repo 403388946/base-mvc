@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+	   http://www.springframework.org/schema/beans/spring-beans.xsd
+          http://www.springframework.org/schema/context
+          http://www.springframework.org/schema/context/spring-context.xsd
+          http://www.springframework.org/schema/aop
+          http://www.springframework.org/schema/aop/spring-aop.xsd">
+	<context:property-placeholder location="classpath:*.properties" />
+
+	<context:annotation-config />
+	<!-- 引入jdbc配置文件 -->
+	<context:component-scan base-package="com.base.**">
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+	<!-- 启用aop注解 -->
+	<aop:aspectj-autoproxy expose-proxy="true"/>
+	<bean class="com.base.core.spring.SpringUtils"/>
+	<!--方式一、使用jdk的实现-->
+	<!--方式一、使用jdk的实现-->
+	<bean id="ky.requestFactory" class="org.springframework.http.client.SimpleClientHttpRequestFactory">
+		<property name="readTimeout" value="10000"/>
+		<property name="connectTimeout" value="5000"/>
+	</bean>
+
+	<!--权限配置-->
+	<import resource="classpath:/spring/spring-config-shiro.xml"/>
+	<!--预设值-->
+	<import resource="classpath:/spring/spring-config-setting.xml"/>
+	<!--数据源-->
+	<import resource="classpath:/spring/datasource_mybatis.xml"/>
+	<import resource="classpath:/spring/spring-redis.xml"/>
+
+</beans>

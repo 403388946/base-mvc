@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:tx="http://www.springframework.org/schema/tx"
+	   xmlns:sharding="http://shardingsphere.apache.org/schema/shardingsphere/sharding"
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                        http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://shardingsphere.apache.org/schema/shardingsphere/sharding 
+                        http://shardingsphere.apache.org/schema/shardingsphere/sharding/sharding.xsd
+                        http://www.springframework.org/schema/tx
+                        http://www.springframework.org/schema/tx/spring-tx.xsd 
+                        http://www.springframework.org/schema/aop 
+                        http://www.springframework.org/schema/aop/spring-aop.xsd"
+	   default-lazy-init="true">
+
+	<!-- 数据源配置, 使用DBCP数据库连接池 -->
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+		<property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+		<property name="url" value="${jdbc_url}" />
+		<property name="username" value="${jdbc_username}"/>
+		<property name="password" value="${jdbc_password}"/>
+
+		<!-- 初始化连接大小 -->
+		<property name="initialSize" value="${dbcp_initialSize}" />
+		<!-- 连接池最大空闲 -->
+		<property name="maxActive" value="${dbcp_maxActive}" />
+		<!-- 连接池最小空闲 -->
+		<property name="minIdle" value="${dbcp_minIdle}" />
+		<!-- 获取连接的最大等待时间 -->
+		<property name="maxWait" value="${dbcp_maxWait}" />
+		<!--是否强制关闭连接时长大于removeAbandonedTimeoutMillis的连接 生产中不使用true-->
+		<property name="removeAbandoned" value="false" />
+		<!--一个连接从被连接到被强制关闭之间的最大生命周期-->
+		<property name="removeAbandonedTimeout" value="1800" />
+		<!-- 关闭abanded连接时输出错误日志 -->
+		<property name="logAbandoned" value="true" />
+	</bean>
+
+
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="shardingDataSource" />
+		<property name="mapperLocations">
+			<array>
+				<value>classpath:mapper/**/*Mapper.xml</value>
+			</array>
+		</property>
+	</bean>
+
+    <bean id="mybatisConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+        <property name="basePackage" value="com.**.dao,com.**.mapper" />
+    </bean>
+
+    <!-- 事务配置 -->
+    <bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="shardingDataSource" />
+	</bean>
+
+	<!--  配置事务传播特性 -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="insert*" propagation="REQUIRED" read-only="false" isolation="READ_COMMITTED" rollback-for="java.lang.Exception" />
+			<tx:method name="save*" propagation="REQUIRED" read-only="false" isolation="READ_COMMITTED" rollback-for="java.lang.Exception" />
+			<tx:method name="add*" propagation="REQUIRED" read-only="false" isolation="READ_COMMITTED" rollback-for="java.lang.Exception" />
+			<tx:method name="create*" propagation="REQUIRED" read-only="false" isolation="READ_COMMITTED" rollback-for="java.lang.Exception" />
+			<tx:method name="import*" propagation="REQUIRED" read-only="false" isolation="READ_COMMITTED" rollback-for="java.lang.Exception" />
+			<tx:method name="edit*" propagation="REQUIRED" read-only="false" isolation="READ_COMMITTED" rollback-for="java.lang.Exception" />
+			<tx:method name="modify*" propagation="REQUIRED" read-only="false" isolation="READ_COMMITTED" rollback-for="java.lang.Exception" />
+			<tx:method name="update*" propagation="REQUIRED" read-only="false" isolation="READ_COMMITTED" rollback-for="java.lang.Exception" />
+			<tx:method name="delete*" propagation="REQUIRED" read-only="false" isolation="READ_COMMITTED" rollback-for="java.lang.Exception" />
+			<tx:method name="remove*" propagation="REQUIRED" read-only="false" isolation="READ_COMMITTED" rollback-for="java.lang.Exception" />
+			<!--<tx:method name="*" read-only="true" rollback-for="java.lang.Exception" />-->
+		</tx:attributes>
+	</tx:advice>
+
+	<!--  配置参与事务的类 execution需要配置路径的层级 根据业务继续添加包  -->
+	<aop:config expose-proxy="true" proxy-target-class="true">
+		<aop:pointcut id="pointcut-base" expression="execution(* com.base.*.service.*.*(..))" />
+		<!--<aop:pointcut id="pointcut-xxx" expression="execution(* com.xxx.*.service.*.*(..))" />-->
+		<aop:advisor pointcut-ref="pointcut-base" advice-ref="txAdvice" />
+		<!--<aop:advisor pointcut-ref="pointcut-xxx" advice-ref="txAdvice" />-->
+	</aop:config>
+
+
+	<tx:annotation-driven proxy-target-class="true" transaction-manager="transactionManager" />
+
+	<bean id="transactionTemplate"
+		  class="org.springframework.transaction.support.TransactionTemplate">
+		<property name="transactionManager">
+			<ref bean="transactionManager"/>
+		</property>
+	</bean>
+
+	<sharding:inline-strategy id="codeCouponIdTableStrategy"
+							  sharding-column="coupon_id"
+							  algorithm-expression="marketing_coupon_code_$->{coupon_id % 10}" />
+
+	<sharding:data-source id="shardingDataSource">
+		<sharding:sharding-rule data-source-names="dataSource" default-data-source-name="dataSource">
+			<sharding:table-rules>
+				<sharding:table-rule logic-table="marketing_coupon_code"
+									 actual-data-nodes="dataSource.marketing_coupon_code_$->{0..9}"
+									 table-strategy-ref="codeCouponIdTableStrategy" />
+			</sharding:table-rules>
+			<sharding:binding-table-rules>
+				<sharding:binding-table-rule logic-tables="marketing_coupon_code"/>
+			</sharding:binding-table-rules>
+		</sharding:sharding-rule>
+		<sharding:props>
+			<prop key="sql.show">true</prop>
+		</sharding:props>
+	</sharding:data-source>
+</beans>

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.base.shiro.mapper.RoleMapper" >
+  <resultMap id="BaseResultMap" type="com.base.shiro.model.Role" >
+      <id column="id" property="id" jdbcType="BIGINT"/>
+      <result column="name" property="name" jdbcType="VARCHAR"/>
+      <result column="available" property="available" jdbcType="BIT"/>
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, name,available
+  </sql>
+  <insert id="insert" parameterType="com.base.shiro.model.Role" >
+    insert into sys_roles
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="name != null" >
+        name,
+      </if>
+      <if test="available != null" >
+        available,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="name != null" >
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="available != null" >
+        #{available,jdbcType=BIT},
+      </if>
+    </trim>
+    <selectKey keyProperty="id" resultType="long" order="AFTER">
+      SELECT @@IDENTITY AS id
+    </selectKey>
+  </insert>
+  <update id="update" parameterType="com.base.shiro.model.Role" >
+    update sys_roles
+    <set >
+      <if test="name != null" >
+        role = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="available != null" >
+        available = #{available,jdbcType=BIT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+
+
+  <select id="getOne" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM sys_roles WHERE id = #{id}
+  </select>
+
+
+  <select id="findIds" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM sys_roles
+    WHERE
+    <foreach collection="ids" open="(" separator="OR" close=")" item="id">
+      id = #{id}
+    </foreach>
+
+  </select>
+
+  <select id="findAllRoles" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM sys_roles WHERE available = 1
+  </select>
+
+  <select id="findRoles" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM sys_roles
+    <where>
+      <if test="paramMap.role != null and paramMap.role != ''">
+        role LIKE #{paramMap.role}
+      </if>
+    </where>
+    limit #{offset}, #{limit}
+  </select>
+
+  <select id="countRoles" resultType="java.lang.Integer">
+    SELECT count(1) FROM sys_roles
+    <where>
+      <if test="paramMap.role != null and paramMap.role != ''">
+        role LIKE #{paramMap.role}
+      </if>
+    </where>
+  </select>
+</mapper>

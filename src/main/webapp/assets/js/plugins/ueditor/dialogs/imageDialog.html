@@ -1,0 +1,120 @@
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title>添加图片</title>
+
+        <style type="text/css">
+            .uploadLabel {
+                display: inline-block;
+                background-size: 100px 100px;
+                background-image: url("/assets/img/upload.png");
+                background-color: #9ea6b9;
+                background-repeat: no-repeat;
+                width: 100px;
+                height: 100px;
+            }
+
+            #file {
+                height: 100px;
+                width: 100px;
+            }
+
+            .errorTxt {
+                font-size: 12px;
+                color: red;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="content">
+            <form id="fileForm" action="" enctype="multipart/form-data" method="post" name="fileForm">
+                <h1>添加图片</h1>
+                <div>
+                    <label>上传图片：</label>
+                    <label for="file" class="uploadLabel">
+                        <input id="file" type="file" name="file" onchange="getUploadFile(this)" style="opacity: 0;filter: alpha(opacity=0)">
+                    </label>
+
+                    <button id="saveFile" type="button" disabled="disabled">提交</button>
+                </div>
+                <span class="errorTxt">*文件格式不正确，请JPG,JEPG,PNG文件</span>
+            </form>
+
+
+        </div>
+        <!--页面中一定要引入internal.js为了能直接使用当前打开dialog的实例变量-->
+        <!--internal.js默认是放到dialogs目录下的-->
+        <script type="text/javascript" src="../dialogs/internal.js"></script>
+        <script src="/assets/js/jquery.min.js"></script>
+        <script src="/assets/js/plugins/jquery-form/jquery.form.js"></script>
+        <script src="/assets/js/plugins/layer/layer.js"></script>
+        <script type="text/javascript">
+
+            var currentHref = window.location.href;
+            currentHref = currentHref.substring(0, currentHref.indexOf('/assets'))
+            var maxWidth = 640;
+
+            $(function () {
+                $(".errorTxt").hide();
+
+                $("#saveFile").click(function () {
+                        var loading = layer.load(1);
+                        var form = $("#fileForm");
+                        var options = {
+                            url:currentHref + "/column/uploadVideoOrImage",
+                            type:"post",
+                            dataType:"json",
+                            success:function (res) {
+                                if(res.flag) {
+                                    layer.close(loading);
+                                    console.log(res)
+                                    var imgUrl = res.data;
+                                    editor.setContent( "<img src='" + imgUrl + "' width='" + maxWidth + "px' />", true)
+                                    dialog.close(true);
+                                }
+                            }
+                        }
+                        form.ajaxSubmit(options);
+                })
+            })
+
+            function getUploadFile(obj) {
+                var files = obj.files;
+                var currentFile = files[0];
+                console.log(currentFile)
+                var file = $("#file").val();
+                var fileSuffix = file.substring(file.lastIndexOf(".") + 1);
+
+                if(fileSuffix != "JPG" && fileSuffix != "JEPG" && fileSuffix != "PNG" && fileSuffix != "jpg" && fileSuffix != "jepg" && fileSuffix != "png"){
+                    $(".errorTxt").show();
+                    $("#saveFile").attr("disabled", "disabled");
+                } else {
+
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        var data = e.target.result;
+                        //加载图片获取图片真实宽度和高度
+                        var image = new Image();
+                        image.onload=function(){
+                            var width = image.width;
+                            var height = image.height;
+                           if(width <= 640) {
+                               maxWidth = width;
+                           } else {
+                               maxWidth = 640
+                           }
+                        };
+                        image.src= data;
+                    };
+                    reader.readAsDataURL(currentFile);
+
+                    var wuc = window.URL.createObjectURL(currentFile);
+                    $(".uploadLabel").attr("style", "background-image: url('" + wuc +"')")
+//                    $(".uploadLabel").attr("style", "background-image: url('/assets/img/uploaded.png')")
+                    $("#saveFile").prop("disabled", "");
+                    $(".errorTxt").hide();
+                }
+            }
+        </script>
+    </body>
+</html>

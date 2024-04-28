@@ -1,0 +1,57 @@
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title>添加番剧模块</title>
+    </head>
+    <body>
+        <div class="content">
+            <h1>添加番剧模块</h1>
+            <div>
+                <label>番剧番号：</label>
+                <input id="animeNum" type="text">
+                <button id="saveAnime">生成</button>
+            </div>
+
+        </div>
+        <!--页面中一定要引入internal.js为了能直接使用当前打开dialog的实例变量-->
+        <!--internal.js默认是放到dialogs目录下的-->
+        <script type="text/javascript" src="../dialogs/internal.js"></script>
+        <script src="/assets/js/jquery.min.js"></script>
+        <script type="text/javascript">
+
+            var currentHref = window.location.href;
+            currentHref = currentHref.substring(0, currentHref.indexOf('/assets'))
+
+            $(function () {
+                $("#saveAnime").click(function () {
+                    var homeId = $("#animeNum").val();
+                    $.get( currentHref + '/home/getHomeById?homeId=' + homeId, {}, function (res) {
+
+                        if(res.flag) {
+
+                            var content = "<p><div style='width: 640px;height: 140px;background-color: #323A51'>";
+                            content = content + "<div style='width:100px;height:100px;margin-top: 20px;margin-left: 20px;margin-right:15px;display: inline-block'>";
+                            content = content + "<img src='" + res.data.subImg + "' width='100%' height='100%' />";
+                            content = content + "</div>";
+                            content = content + "<div style='width: 355px;height: 96px;margin-top:22px;display: inline-block'>";
+                            content = content + "<div style='width: 234px;height: 23px;font-size: 18px;color: #ffffff;font-weight: bold;overflow: hidden;text-overflow: ellipsis;white-space: nowrap'>";
+                            content = content + res.data.title;
+                            content = content + " </div>";
+                            content = content + "<div style='width: 355px;height: 58px;font-size: 14px;color: #ffffff;margin-top:15px;display: -webkit-box;-webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;font-family: Microsoft YaHei;text-overflow: ellipsis'>";
+                            content = content + res.data.description;
+                            content = content + "</div></div ></div>";
+                            content = content + "<a href='http://anime.upupoo.com/async/getAnimationDetails?animeId=" +res.data.id+ "'>";
+                            content = content + "<div style='width: 100px;height: 40px;border-radius: 100px;border:solid 1px #fad961;text-align: center;color:#ffffff;display: inline-block;position: absolute;margin-top: 50px;margin-left: 20px;line-height: 40px'>";
+                            content = content + "查看此番剧</div></a>";
+                            content = content + "</p><p></p>";
+
+                            var imgUrl = res.data.img;
+                            editor.setContent( content, true);
+                            dialog.close(true);
+                        }
+                    }, 'json')
+                })
+            })
+        </script>
+    </body>
+</html>

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.base.shiro.mapper.UserMapper" >
+  <resultMap id="BaseResultMap" type="com.base.shiro.model.User" >
+      <id column="id" property="id" jdbcType="BIGINT"  />
+      <result column="user_name" property="username" jdbcType="VARCHAR" />
+      <result column="real_name" property="realName" jdbcType="VARCHAR" />
+      <result column="telephone" property="telephone" jdbcType="VARCHAR" />
+      <result column="password" property="password" jdbcType="VARCHAR" />
+      <result column="salt" property="salt" jdbcType="VARCHAR" />
+      <result column="role_id" property="roleId" jdbcType="BIGINT" />
+      <result column="locked" property="locked" jdbcType="BIT"/>
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, user_name, real_name, telephone, password, salt, role_id, locked
+  </sql>
+  <insert id="insertSelective" parameterType="com.base.shiro.model.User" >
+    insert into sys_user
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="username != null and username != ''" >
+        user_name,
+      </if>
+      <if test="realName != null and realName != ''" >
+        real_name,
+      </if>
+      <if test="telephone != null and telephone != ''" >
+        telephone,
+      </if>
+      <if test="password != null" >
+        password,
+      </if>
+      <if test="salt != null" >
+        salt,
+      </if>
+      <if test="roleId != null" >
+        role_id,
+      </if>
+      <if test="locked != null" >
+        locked,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="username != null" >
+        #{username,jdbcType=VARCHAR},
+      </if>
+      <if test="realName != null and realName != ''" >
+        #{realName},
+      </if>
+      <if test="telephone != null and telephone != ''" >
+        #{telephone},
+      </if>
+      <if test="password != null" >
+        #{password,jdbcType=VARCHAR},
+      </if>
+      <if test="salt != null" >
+        #{salt,jdbcType=VARCHAR},
+      </if>
+      <if test="roleId != null" >
+        #{roleId,jdbcType=VARCHAR},
+      </if>
+      <if test="locked != null" >
+        #{locked,jdbcType=BIT},
+      </if>
+    </trim>
+    <selectKey keyProperty="id" resultType="long" order="AFTER">
+      SELECT @@IDENTITY AS id
+    </selectKey>
+  </insert>
+  <update id="update" parameterType="com.base.shiro.model.User" >
+    update sys_user
+    <set >
+      <if test="username != null and username != ''" >
+        user_name = #{username,jdbcType=VARCHAR},
+      </if>
+      <if test="realName != null and realName != ''" >
+        real_name = #{realName},
+      </if>
+      <if test="telephone != null and telephone != ''" >
+        telephone = #{telephone},
+      </if>
+      <if test="password != null and password != ''" >
+        password = #{password,jdbcType=VARCHAR},
+      </if>
+      <if test="salt != null and salt != ''" >
+        salt = #{salt,jdbcType=VARCHAR},
+      </if>
+      <if test="roleId != null" >
+        role_id = #{roleId,jdbcType=VARCHAR},
+      </if>
+      <if test="locked != null" >
+        locked = #{locked,jdbcType=BIT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+
+  <select id="getOne" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM sys_user WHERE id = #{id}
+  </select>
+
+  <select id="findUserByName" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM sys_user WHERE user_name = #{userName}
+  </select>
+
+  <select id="findUsers" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM sys_user
+    <where>
+      <if test="userName != null and userName != ''">
+        user_name LIKE #{userName}
+      </if>
+    </where>
+    <if test="start != null and pageSize != null and pageSize > 0 ">
+      limit start, pageSize
+    </if>
+  </select>
+
+  <select id="findAll" resultType="java.lang.Long">
+    SELECT id FROM sys_user
+    WHERE user_name != 'admin'
+  </select>
+
+  <select id="queryByPage" resultType="com.base.shiro.model.User">
+    SELECT
+    u.id as id, user_name as username, real_name as realName, telephone, name as roleName
+    FROM sys_user u LEFT JOIN sys_roles r ON u.role_id = r.id
+    <where>
+      <if test="paramMap.username != null and paramMap.username != ''" >
+        AND user_name LIKE #{paramMap.username}
+      </if>
+    </where>
+    limit #{offset},#{limit}
+  </select>
+  <select id="queryByPageCount" resultType="java.lang.Integer">
+    SELECT
+    COUNT(1)
+    FROM sys_user
+    <where>
+      <if test="paramMap.username != null and paramMap.username != ''" >
+        AND user_name LIKE #{paramMap.username}
+      </if>
+    </where>
+  </select>
+</mapper>
